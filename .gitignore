@@ -1,0 +1,34 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# Xcode
+DerivedData/
+*.xcarchive
+*.xcframework
+*.xcresult
+*.dSYM
+*.bcsymbolmap
+*.xcodeproj/xcuserdata/
+Examples/*/*.xcodeproj/
+*.xcworkspace/xcuserdata/
+xcuserdata/
+*.xccheckout
+*.xcscmblueprint
+
+# Distribution output
+Artifacts/
+
+# Coverage and profiling
+*.profdata
+*.profraw
+coverage/
+
+# macOS and editors
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/

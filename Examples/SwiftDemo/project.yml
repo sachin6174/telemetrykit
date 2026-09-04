@@ -1,0 +1,39 @@
+name: SwiftDemo
+
+options:
+  minimumXcodeGenVersion: 2.38.0
+  deploymentTarget:
+    iOS: "15.0"
+
+packages:
+  TelemetryKit:
+    path: ../..
+
+targets:
+  SwiftDemo:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Resources/PrivacyInfo.xcprivacy
+        buildPhase: resources
+    info:
+      path: Resources/Info.plist
+    dependencies:
+      - package: TelemetryKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.telemetrykit.samples.swift
+        PRODUCT_NAME: SwiftDemo
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+schemes:
+  SwiftDemo:
+    build:
+      targets:
+        SwiftDemo: all
+    run:
+      config: Debug
+    archive:
+      config: Release

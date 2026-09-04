@@ -1,0 +1,5 @@
+* text=auto eol=lf
+
+*.xcframework binary
+*.zip binary
+*.xcresult binary

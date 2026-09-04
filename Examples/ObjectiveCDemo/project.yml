@@ -1,0 +1,41 @@
+name: ObjectiveCDemo
+
+options:
+  minimumXcodeGenVersion: 2.38.0
+  deploymentTarget:
+    iOS: "15.0"
+
+packages:
+  TelemetryKit:
+    path: ../..
+
+targets:
+  ObjectiveCDemo:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Resources/PrivacyInfo.xcprivacy
+        buildPhase: resources
+    info:
+      path: Resources/Info.plist
+    dependencies:
+      - package: TelemetryKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.telemetrykit.samples.objectivec
+        PRODUCT_NAME: ObjectiveCDemo
+        CLANG_ENABLE_MODULES: YES
+        CLANG_ENABLE_OBJC_ARC: YES
+        ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+schemes:
+  ObjectiveCDemo:
+    build:
+      targets:
+        ObjectiveCDemo: all
+    run:
+      config: Debug
+    archive:
+      config: Release

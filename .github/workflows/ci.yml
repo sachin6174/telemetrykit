@@ -1,0 +1,157 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TK_SCHEME: TelemetryKit
+  TK_PRODUCT: TelemetryKit
+  TK_FRAMEWORK_NAME: TelemetryKit
+  TK_IOS_DEPLOYMENT_TARGET: "15.0"
+
+jobs:
+  validate:
+    name: Validate (${{ matrix.label }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: Xcode 16.4
+            runner: macos-15
+            developer_dir: /Applications/Xcode_16.4.app/Contents/Developer
+          - label: Current hosted Xcode
+            runner: macos-latest
+            developer_dir: ""
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    env:
+      TK_DERIVED_DATA_PATH: ${{ runner.temp }}/TelemetryKitDerivedData
+      TK_SWIFT_SAMPLE_CONTAINER: Examples/SwiftDemo/SwiftDemo.xcodeproj
+      TK_SWIFT_SAMPLE_SCHEME: SwiftDemo
+      TK_OBJC_SAMPLE_CONTAINER: Examples/ObjectiveCDemo/ObjectiveCDemo.xcodeproj
+      TK_OBJC_SAMPLE_SCHEME: ObjectiveCDemo
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Select requested Xcode
+        if: matrix.developer_dir != ''
+        env:
+          TK_REQUESTED_DEVELOPER_DIR: ${{ matrix.developer_dir }}
+        run: |
+          set -euo pipefail
+          if [[ ! -d "$TK_REQUESTED_DEVELOPER_DIR" ]]; then
+            echo "error: required Xcode is unavailable at $TK_REQUESTED_DEVELOPER_DIR" >&2
+            exit 1
+          fi
+          echo "DEVELOPER_DIR=$TK_REQUESTED_DEVELOPER_DIR" >> "$GITHUB_ENV"
+
+      - name: Print toolchain
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          swift --version
+
+      - name: Install XcodeGen
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+        run: |
+          set -euo pipefail
+          if ! command -v xcodegen >/dev/null 2>&1; then
+            brew install xcodegen
+          fi
+
+      - name: Generate sample projects
+        run: bash Scripts/generate-samples.sh
+
+      - name: Validate package
+        run: bash Scripts/validate-package.sh
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.runner }}
+          path: ${{ runner.temp }}/TelemetryKitDerivedData/TelemetryKitTests.xcresult
+          if-no-files-found: ignore
+          retention-days: 7
+
+  thread-sanitizer:
+    name: Thread Sanitizer
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      TK_DERIVED_DATA_PATH: ${{ runner.temp }}/TelemetryKitTSanDerivedData
+      TK_RUN_FORMAT: "0"
+      TK_RUN_DEVICE_BUILD: "0"
+      TK_RUN_SIMULATOR_BUILD: "0"
+      TK_RUN_DOCC: "0"
+      TK_ENABLE_CODE_COVERAGE: "0"
+      TK_ENABLE_THREAD_SANITIZER: "1"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run tests with Thread Sanitizer
+        run: bash Scripts/validate-package.sh
+
+      - name: Upload sanitizer results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: thread-sanitizer-results
+          path: ${{ runner.temp }}/TelemetryKitTSanDerivedData/TelemetryKitTests.xcresult
+          if-no-files-found: ignore
+          retention-days: 7
+
+  api-compatibility:
+    name: Public API compatibility
+    if: github.event_name == 'pull_request'
+    runs-on: macos-latest
+    timeout-minutes: 30
+    env:
+      TK_API_PRODUCT: TelemetryKit
+    steps:
+      - name: Check out repository and tags
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for breaking API changes
+        run: bash Scripts/check-api.sh
+
+  distribution:
+    name: XCFramework distribution
+    needs: validate
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      TK_OUTPUT_DIRECTORY: ${{ runner.temp }}/TelemetryKitArtifacts
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build and validate XCFramework
+        run: bash Scripts/build-xcframework.sh
+
+      - name: Upload XCFramework artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: TelemetryKit-XCFramework
+          path: |
+            ${{ runner.temp }}/TelemetryKitArtifacts/TelemetryKit.xcframework.zip
+            ${{ runner.temp }}/TelemetryKitArtifacts/TelemetryKit.xcframework.zip.checksum
+            ${{ runner.temp }}/TelemetryKitArtifacts/TelemetryKit.xcframework.zip.sha256
+          if-no-files-found: error
+          retention-days: 14

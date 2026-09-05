@@ -3,7 +3,48 @@ import XCTest
 
 @testable import TelemetryKit
 
-final class PipelinePerformanceTests: XCTestCase {
+final class PipelinePerformanceTests: XCTestCase, @unchecked Sendable {
+    @MainActor
+    func testSaturatedPublicCaptureCPUAndMemory() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("TelemetryKitMemory-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        var configuration = TelemetryConfiguration(
+            endpoint: URL(string: "https://telemetry.example.invalid/events")!, consent: .granted)
+        configuration.storageDirectory = directory
+        configuration.queueLimits.overflowPolicy = .dropNewest
+        let client = try await TelemetryClient.start(
+            configuration: configuration,
+            transport: PerformanceOfflineTransport(),
+            clock: SystemTelemetryClock(),
+            randomSource: SystemTelemetryRandomSource(),
+            startsBackgroundTasks: false,
+            startsInstrumentation: false
+        )
+        for _ in 0..<500 { XCTAssertEqual(client.capture("warmup"), .accepted) }
+        // A full queue must not grow while callers continue submitting events.
+        // Metrics are observations, not a substitute for device-specific budgets.
+        let exerciseCapture = {
+            for _ in 0..<20_000 {
+                XCTAssertEqual(client.capture("saturated", attributes: ["count": .integer(42)]), .queueFull)
+            }
+        }
+        #if TELEMETRYKIT_SANITIZER
+            // Xcode 26.6/iOS 26.5 crashes in XCTest's metric machinery under TSan,
+            // including a standalone probe with no SDK operations. Keep the full
+            // workload and assertions instrumented; measure resources separately.
+            for _ in 0..<5 { exerciseCapture() }
+        #else
+            measure(metrics: [XCTClockMetric(), XCTCPUMetric(), XCTMemoryMetric()]) {
+                exerciseCapture()
+            }
+        #endif
+        let status = await client.queueStatus()
+        XCTAssertEqual(status.eventCount, 500)
+        XCTAssertLessThanOrEqual(status.byteCount, configuration.queueLimits.maximumMemoryBytes)
+        await client.shutdown(flush: false)
+    }
+
     func testPrivacySanitizationPerformance() {
         let filter = TelemetryPrivacyFilter(configuration: TelemetryPrivacyConfiguration())
         let events = (0..<2_000).map { index in
@@ -109,4 +150,13 @@ final class PipelinePerformanceTests: XCTestCase {
             XCTAssertGreaterThan(encodedBytes, 0)
         }
     }
+}
+
+private struct PerformanceOfflineTransport: TelemetryTransport {
+    func upload(body: Data) async throws -> TelemetryTransportResponse {
+        throw URLError(.notConnectedToInternet)
+    }
+    func resumeUploads() {}
+    func cancelOutstanding() {}
+    func cancelAll() {}
 }

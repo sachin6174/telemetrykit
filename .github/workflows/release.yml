@@ -29,10 +29,10 @@ jobs:
   release:
     name: Build and publish
     runs-on: macos-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     env:
       TK_DERIVED_DATA_PATH: ${{ runner.temp }}/TelemetryKitReleaseDerivedData
-      TK_OUTPUT_DIRECTORY: ${{ runner.temp }}/TelemetryKitRelease
+      TK_OUTPUT_DIRECTORY: ${{ github.workspace }}/Artifacts
       TK_SWIFT_SAMPLE_CONTAINER: Examples/SwiftDemo/SwiftDemo.xcodeproj
       TK_SWIFT_SAMPLE_SCHEME: SwiftDemo
       TK_OBJC_SAMPLE_CONTAINER: Examples/ObjectiveCDemo/ObjectiveCDemo.xcodeproj
@@ -87,16 +87,43 @@ jobs:
       - name: Build XCFramework release artifacts
         run: bash Scripts/build-xcframework.sh
 
+      - name: Validate release binary and sample runtime behavior
+        run: bash Scripts/validate-runtime.sh
+
+      - name: Validate concurrency under Thread Sanitizer
+        env:
+          TK_DERIVED_DATA_PATH: ${{ runner.temp }}/TelemetryKitReleaseTSan
+          TK_RUN_FORMAT: "0"
+          TK_RUN_DEVICE_BUILD: "0"
+          TK_RUN_SIMULATOR_BUILD: "0"
+          TK_RUN_DOCC: "0"
+          TK_ENABLE_CODE_COVERAGE: "0"
+          TK_ENABLE_THREAD_SANITIZER: "1"
+        run: bash Scripts/validate-package.sh
+
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
         with:
           name: TelemetryKit-${{ env.TK_RELEASE_TAG }}
           path: |
-            ${{ runner.temp }}/TelemetryKitRelease/TelemetryKit.xcframework.zip
-            ${{ runner.temp }}/TelemetryKitRelease/TelemetryKit.xcframework.zip.checksum
-            ${{ runner.temp }}/TelemetryKitRelease/TelemetryKit.xcframework.zip.sha256
+            Artifacts/TelemetryKit.xcframework.zip
+            Artifacts/TelemetryKit.xcframework.zip.checksum
+            Artifacts/TelemetryKit.xcframework.zip.sha256
           if-no-files-found: error
           retention-days: 30
+
+      - name: Retain release validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-validation-${{ env.TK_RELEASE_TAG }}
+          path: |
+            Artifacts/Validation/**/*.log
+            Artifacts/Validation/**/*.xcresult
+            ${{ runner.temp }}/TelemetryKitReleaseDerivedData/TelemetryKitTests.xcresult
+            ${{ runner.temp }}/TelemetryKitReleaseTSan/TelemetryKitTests.xcresult
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Publish GitHub release
         env:
@@ -110,7 +137,8 @@ jobs:
           )
 
           if gh release view "$TK_RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$TK_RELEASE_TAG" "${release_files[@]}" --clobber
+            echo "error: release already exists; never replace published binary checksums. Publish a new version." >&2
+            exit 1
           else
             release_arguments=(
               release create "$TK_RELEASE_TAG"

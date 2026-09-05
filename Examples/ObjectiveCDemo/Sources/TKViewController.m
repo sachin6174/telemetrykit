@@ -40,6 +40,7 @@
                                    forAxis:UILayoutConstraintAxisHorizontal];
 
     self.consentSwitch = [[UISwitch alloc] init];
+    self.consentSwitch.accessibilityIdentifier = @"telemetry.consent";
     [self.consentSwitch addTarget:self
                            action:@selector(consentChanged:)
                  forControlEvents:UIControlEventValueChanged];
@@ -54,8 +55,10 @@
                                        action:@selector(captureEvent:)];
     self.flushButton = [self buttonWithTitle:@"Flush queue"
                                      action:@selector(flushQueue:)];
+    self.captureButton.accessibilityIdentifier = @"telemetry.capture";
 
     self.statusView = [[UITextView alloc] init];
+    self.statusView.accessibilityIdentifier = @"telemetry.status";
     self.statusView.editable = NO;
     self.statusView.font = [UIFont monospacedSystemFontOfSize:13 weight:UIFontWeightRegular];
     self.statusView.backgroundColor = UIColor.secondarySystemBackgroundColor;

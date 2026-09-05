@@ -17,19 +17,31 @@ targets:
       - path: Sources
       - path: Resources/PrivacyInfo.xcprivacy
         buildPhase: resources
-    info:
-      path: Resources/Info.plist
     dependencies:
       - package: TelemetryKit
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.telemetrykit.samples.objectivec
         PRODUCT_NAME: ObjectiveCDemo
+        INFOPLIST_FILE: Resources/Info.plist
         CLANG_ENABLE_MODULES: YES
         CLANG_ENABLE_OBJC_ARC: YES
         ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: YES
         TARGETED_DEVICE_FAMILY: "1,2"
 
+  ObjectiveCDemoUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - ../UITests
+    dependencies:
+      - target: ObjectiveCDemo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.telemetrykit.samples.objectivec.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.0"
 schemes:
   ObjectiveCDemo:
     build:
@@ -37,5 +49,8 @@ schemes:
         ObjectiveCDemo: all
     run:
       config: Debug
+    test:
+      targets:
+        - ObjectiveCDemoUITests
     archive:
       config: Release

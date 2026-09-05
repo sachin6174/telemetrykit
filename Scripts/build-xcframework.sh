@@ -355,6 +355,13 @@ if tk_is_enabled "$TK_VALIDATE_CONSUMERS"; then
         iphonesimulator \
         "arm64-apple-ios${TK_IOS_DEPLOYMENT_TARGET}-simulator" \
         "$TK_SIMULATOR_SLICE_FRAMEWORK"
+    if tk_is_enabled "$TK_INCLUDE_X86_64_SIMULATOR"; then
+        tk_validate_consumers \
+            "Intel iOS Simulator" \
+            iphonesimulator \
+            "x86_64-apple-ios${TK_IOS_DEPLOYMENT_TARGET}-simulator" \
+            "$TK_SIMULATOR_SLICE_FRAMEWORK"
+    fi
 fi
 
 if tk_is_enabled "$TK_CREATE_ZIP"; then

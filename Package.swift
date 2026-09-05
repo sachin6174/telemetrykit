@@ -34,6 +34,10 @@ let package = Package(
             name: "TelemetryKitPerformanceTests",
             dependencies: ["TelemetryKit"]
         ),
+        .testTarget(
+            name: "TelemetryKitRuntimeTests",
+            dependencies: ["TelemetryKit"]
+        ),
     ],
     swiftLanguageVersions: [.v5]
 )

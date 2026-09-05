@@ -12,6 +12,7 @@ DerivedData/
 *.bcsymbolmap
 *.xcodeproj/xcuserdata/
 Examples/*/*.xcodeproj/
+Compatibility/*/*.xcodeproj/
 *.xcworkspace/xcuserdata/
 xcuserdata/
 *.xccheckout

@@ -17,6 +17,9 @@ final class ViewController: UIViewController {
     }
 
     private func configureView() {
+        consentSwitch.accessibilityIdentifier = "telemetry.consent"
+        captureButton.accessibilityIdentifier = "telemetry.capture"
+        statusView.accessibilityIdentifier = "telemetry.status"
         let titleLabel = UILabel()
         titleLabel.text = "Privacy-first demo"
         titleLabel.font = .preferredFont(forTextStyle: .title2)

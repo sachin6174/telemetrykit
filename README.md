@@ -7,6 +7,9 @@ The project is intentionally SDK-shaped: a small public API, Swift concurrency i
 > [!IMPORTANT]
 > TelemetryKit is under active development. Pin an exact version for production use, review the privacy configuration for every release, and treat the application—not the SDK—as the authority for consent and disclosure.
 
+See [executed validation](VALIDATION.md), [release acceptance](RELEASE_CHECKLIST.md),
+and [performance evidence](PERFORMANCE.md) before adopting a release.
+
 ## What it provides
 
 - Public Swift and Objective-C APIs.

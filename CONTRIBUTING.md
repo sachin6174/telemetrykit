@@ -25,6 +25,11 @@ Generate each example from its `project.yml` and build it. Changes involving con
 
 CI is authoritative for the complete supported-Xcode matrix and binary-distribution checks.
 
+After producing the XCFramework, run `bash Scripts/validate-runtime.sh` to execute
+real loopback HTTP, binary-consumer, and sample UI checks. See
+[RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) for release acceptance and
+[PERFORMANCE.md](PERFORMANCE.md) for measurement limitations.
+
 ## Test expectations
 
 - **Unit tests:** deterministic value, encoding, queue, batching, retry, and state-machine behavior.

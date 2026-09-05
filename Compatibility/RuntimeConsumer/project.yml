@@ -1,0 +1,33 @@
+name: BinaryRuntime
+options:
+  deploymentTarget:
+    iOS: "15.0"
+targets:
+  BinaryRuntimeTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - ../../Tests/TelemetryKitRuntimeTests
+      - ObjectiveCRuntimeTests.m
+    dependencies:
+      - framework: ../../Artifacts/TelemetryKit.xcframework
+        embed: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.telemetrykit.binary-runtime-tests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+        GCC_TREAT_WARNINGS_AS_ERRORS: YES
+        CLANG_ENABLE_MODULES: YES
+        CLANG_ENABLE_OBJC_ARC: YES
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @loader_path/Frameworks"
+schemes:
+  BinaryRuntime:
+    build:
+      targets:
+        BinaryRuntimeTests: all
+    test:
+      targets:
+        - BinaryRuntimeTests

@@ -17,17 +17,29 @@ targets:
       - path: Sources
       - path: Resources/PrivacyInfo.xcprivacy
         buildPhase: resources
-    info:
-      path: Resources/Info.plist
     dependencies:
       - package: TelemetryKit
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.telemetrykit.samples.swift
         PRODUCT_NAME: SwiftDemo
+        INFOPLIST_FILE: Resources/Info.plist
         SWIFT_VERSION: "5.0"
         TARGETED_DEVICE_FAMILY: "1,2"
 
+  SwiftDemoUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - ../UITests
+    dependencies:
+      - target: SwiftDemo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.telemetrykit.samples.swift.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.0"
 schemes:
   SwiftDemo:
     build:
@@ -35,5 +47,8 @@ schemes:
         SwiftDemo: all
     run:
       config: Debug
+    test:
+      targets:
+        - SwiftDemoUITests
     archive:
       config: Release

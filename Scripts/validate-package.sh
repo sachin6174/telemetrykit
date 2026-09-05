@@ -278,8 +278,14 @@ if tk_is_enabled "$TK_RUN_TESTS"; then
         -enableCodeCoverage "$TK_XCODE_CODE_COVERAGE"
         -resultBundlePath "$TK_TEST_RESULT"
     )
+    TK_TEST_BUILD_SETTINGS=(
+        'OTHER_SWIFT_FLAGS=$(inherited) -strict-concurrency=complete'
+    )
     if tk_is_enabled "$TK_ENABLE_THREAD_SANITIZER"; then
         TK_TEST_OPTIONS+=(-enableThreadSanitizer YES)
+        TK_TEST_BUILD_SETTINGS=(
+            'OTHER_SWIFT_FLAGS=$(inherited) -strict-concurrency=complete -DTELEMETRYKIT_SANITIZER'
+        )
     fi
 
     tk_note "Testing $TK_SCHEME on simulator $TK_SELECTED_SIMULATOR"
@@ -290,7 +296,8 @@ if tk_is_enabled "$TK_RUN_TESTS"; then
         -destination-timeout 120 \
         -derivedDataPath "$TK_DERIVED_DATA_PATH/tests" \
         "${TK_TEST_OPTIONS[@]}" \
-        "${TK_COMMON_BUILD_SETTINGS[@]}"
+        "${TK_COMMON_BUILD_SETTINGS[@]}" \
+        "${TK_TEST_BUILD_SETTINGS[@]}"
 fi
 
 if tk_is_enabled "$TK_RUN_DOCC"; then

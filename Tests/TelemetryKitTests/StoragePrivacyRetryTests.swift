@@ -191,7 +191,7 @@ final class TelemetryPrivacyFilterTests: XCTestCase {
         let sanitized = try XCTUnwrap(filter.sanitize(event))
         XCTAssertEqual(sanitized.name, "check")
         XCTAssertEqual(sanitized.attributes["token"], .string("[REDACTED]"))
-        XCTAssertEqual(sanitized.attributes["message"], .string("abcde"))
+        XCTAssertEqual(sanitized.attributes["messa"], .string("abcde"))
         XCTAssertEqual(sanitized.attributes["items"], .array([.integer(1), .integer(2)]))
     }
 

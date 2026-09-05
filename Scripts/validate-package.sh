@@ -134,7 +134,7 @@ if tk_is_enabled "$TK_RUN_FORMAT"; then
     fi
 
     TK_FORMAT_PATHS=("$TK_PACKAGE_PATH/Package.swift")
-    for tk_candidate in Sources Tests Examples Samples Compatibility; do
+    for tk_candidate in Sources Tests Examples Samples Compatibility Scripts; do
         if [[ -d "$TK_PACKAGE_PATH/$tk_candidate" ]]; then
             TK_FORMAT_PATHS+=("$TK_PACKAGE_PATH/$tk_candidate")
         fi

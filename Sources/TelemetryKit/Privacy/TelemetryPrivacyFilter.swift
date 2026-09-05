@@ -288,7 +288,7 @@ internal struct TelemetryPrivacyFilter: Sendable {
         let (value, overflow) = configuration.maximumStringLength.multipliedReportingOverflow(
             by: 4
         )
-        return overflow ? Int.max : max(1, value)
+        return overflow ? Int.max : max(Self.maximumRedactionKeyBytes, value)
     }
 
     private static func keyCandidateIsOrderedBefore(

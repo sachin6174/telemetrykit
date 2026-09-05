@@ -90,7 +90,7 @@ final class DemoTelemetry {
 
     func flushIfRunning() async {
         guard let client else { return }
-        try? await client.flush()
+        _ = try? await client.flush()
     }
 
     private func makeConfiguration() -> TelemetryConfiguration {

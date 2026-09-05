@@ -46,12 +46,17 @@ static NSString *const TKDemoErrorDomain = @"io.telemetrykit.samples.objectivec"
         return;
     }
 
+    // This is a one-shot async operation, not a block-storing property setter.
+    // Retain the wrapper until shutdown; it does not retain this completion.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-retain-cycles"
     [client setConsent:TKTelemetryConsentDenied
              completion:^(NSError * _Nullable consentError) {
         [client shutdownWithCompletion:^{
             dispatch_async(dispatch_get_main_queue(), ^{ completion(consentError); });
         }];
     }];
+#pragma clang diagnostic pop
 }
 
 - (void)startAfterUserConsentWithCompletion:(TKDemoErrorCompletion)completion {
@@ -80,6 +85,10 @@ static NSString *const TKDemoErrorDomain = @"io.telemetrykit.samples.objectivec"
             return;
         }
 
+        // Keep the wrapper alive until the one-shot consent completion installs
+        // it on the sample owner. The SDK does not store this block on client.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-retain-cycles"
         [client setConsent:TKTelemetryConsentGranted
                  completion:^(NSError * _Nullable consentError) {
             if (consentError == nil) {
@@ -89,6 +98,7 @@ static NSString *const TKDemoErrorDomain = @"io.telemetrykit.samples.objectivec"
             }
             dispatch_async(dispatch_get_main_queue(), ^{ completion(consentError); });
         }];
+#pragma clang diagnostic pop
     }];
 }
 

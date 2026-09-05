@@ -25,4 +25,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Documented private vulnerability-reporting expectations.
 
+### Fixed
+
+- Apple-toolchain compilation of disk locking and throwing continuations.
+- Sensitive-key recognition when attribute string limits are very small.
+- Swift and Objective-C sample compilation under warnings-as-errors.
+- Library-evolution XCFramework resource handling and installation of Swift modules and Objective-C compatibility metadata.
+
 Release links will be added when the repository publishes its first tagged version.

@@ -101,13 +101,21 @@ TK_COMMON_BUILD_SETTINGS=(
     'OTHER_SWIFT_FLAGS=$(inherited) -strict-concurrency=complete'
 )
 
-cd "$TK_PACKAGE_PATH"
+# A resource-free staging manifest avoids Xcode-generated resource accessors
+# that cannot currently be emitted in library-evolution module interfaces.
+# The only SDK resource is copied into each framework below.
+TK_BINARY_PACKAGE_PATH="$TK_STAGE_ROOT/Package"
+mkdir -p "$TK_BINARY_PACKAGE_PATH"
+ditto "$TK_PACKAGE_PATH/Sources" "$TK_BINARY_PACKAGE_PATH/Sources"
+cp "$TK_SCRIPT_DIRECTORY/BinaryPackage.swift" "$TK_BINARY_PACKAGE_PATH/Package.swift"
+cd "$TK_BINARY_PACKAGE_PATH"
 tk_note "Resolving package dependencies"
 xcodebuild -resolvePackageDependencies -scheme "$TK_SCHEME"
 
 tk_note "Archiving iOS device framework"
 xcodebuild archive \
     -scheme "$TK_SCHEME" \
+    -derivedDataPath "$TK_STAGE_ROOT/DeviceDerivedData" \
     -configuration "$TK_BUILD_CONFIGURATION" \
     -destination "generic/platform=iOS" \
     -archivePath "$TK_DEVICE_ARCHIVE" \
@@ -123,6 +131,7 @@ fi
 tk_note "Archiving iOS Simulator framework ($TK_SIMULATOR_ARCHS)"
 xcodebuild archive \
     -scheme "$TK_SCHEME" \
+    -derivedDataPath "$TK_STAGE_ROOT/SimulatorDerivedData" \
     -configuration "$TK_BUILD_CONFIGURATION" \
     -destination "generic/platform=iOS Simulator" \
     -archivePath "$TK_SIMULATOR_ARCHIVE" \
@@ -151,6 +160,29 @@ tk_find_framework() {
 
 TK_DEVICE_FRAMEWORK="$(tk_find_framework "$TK_DEVICE_ARCHIVE")"
 TK_SIMULATOR_FRAMEWORK="$(tk_find_framework "$TK_SIMULATOR_ARCHIVE")"
+
+# SwiftPM archives leave the target's Swift modules and generated Objective-C
+# header beside the product rather than installing them inside the framework.
+tk_install_module_metadata() {
+    local tk_framework="$1"
+    local tk_derived_data="$2"
+    local tk_platform="$3"
+    local tk_products="$tk_derived_data/Build/Intermediates.noindex/ArchiveIntermediates/$TK_SCHEME/BuildProductsPath/$TK_BUILD_CONFIGURATION-$tk_platform"
+    local tk_header
+    [[ -d "$tk_products/$TK_FRAMEWORK_NAME.swiftmodule" ]] \
+        || tk_fail "Swift module metadata missing: $tk_products"
+    mkdir -p "$tk_framework/Modules" "$tk_framework/Headers"
+    ditto "$tk_products/$TK_FRAMEWORK_NAME.swiftmodule" \
+        "$tk_framework/Modules/$TK_FRAMEWORK_NAME.swiftmodule"
+    tk_header="$(find "$tk_derived_data/Build" -type f -name "$TK_FRAMEWORK_NAME-Swift.h" -print -quit)"
+    [[ -n "$tk_header" ]] || tk_fail "generated Objective-C header missing"
+    cp "$tk_header" "$tk_framework/Headers/$TK_FRAMEWORK_NAME-Swift.h"
+    printf 'framework module %s {\n  header "%s-Swift.h"\n  export *\n}\n' \
+        "$TK_FRAMEWORK_NAME" "$TK_FRAMEWORK_NAME" > "$tk_framework/Modules/module.modulemap"
+}
+
+tk_install_module_metadata "$TK_DEVICE_FRAMEWORK" "$TK_STAGE_ROOT/DeviceDerivedData" iphoneos
+tk_install_module_metadata "$TK_SIMULATOR_FRAMEWORK" "$TK_STAGE_ROOT/SimulatorDerivedData" iphonesimulator
 
 if tk_is_enabled "$TK_REQUIRE_PRIVACY_MANIFEST"; then
     if [[ -z "$TK_PRIVACY_MANIFEST" ]]; then

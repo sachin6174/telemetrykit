@@ -71,7 +71,7 @@ internal final class StorageDirectoryLease: @unchecked Sendable {
                         "The storage namespace lock file could not be opened."
                     )
                 }
-                guard Darwin.flock(fileDescriptor, LOCK_EX | LOCK_NB) == 0 else {
+                guard flock(fileDescriptor, LOCK_EX | LOCK_NB) == 0 else {
                     Darwin.close(fileDescriptor)
                     throw TelemetryError.storageUnavailable(
                         "Another process already owns this storage namespace."
@@ -100,7 +100,7 @@ internal final class StorageDirectoryLease: @unchecked Sendable {
         isReleased = true
         lock.unlock()
         #if canImport(Darwin)
-            _ = Darwin.flock(fileDescriptor, LOCK_UN)
+            _ = flock(fileDescriptor, LOCK_UN)
             _ = Darwin.close(fileDescriptor)
         #endif
         Registry.shared.release(path: path)

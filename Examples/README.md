@@ -2,6 +2,7 @@
 
 The examples are intentionally ordinary UIKit applications. They exercise the public product as external consumers rather than importing internal implementation targets.
 
+- `FullFeatureDemo` is a guided, comprehensive Swift showcase with a numbered path through every public Swift feature.
 - `SwiftDemo` uses async startup/lifecycle methods and the synchronous capture path directly.
 - `ObjectiveCDemo` uses only the Objective-C facade and Foundation/UIKit types.
 

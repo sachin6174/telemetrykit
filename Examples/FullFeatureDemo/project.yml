@@ -1,0 +1,55 @@
+name: TelemetryKitFullFeatureDemo
+
+options:
+  minimumXcodeGenVersion: 2.38.0
+  deploymentTarget:
+    iOS: "15.0"
+
+packages:
+  TelemetryKit:
+    path: ../..
+
+targets:
+  TelemetryKitFullFeatureDemo:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Resources/PrivacyInfo.xcprivacy
+        buildPhase: resources
+    dependencies:
+      - package: TelemetryKit
+        embed: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.telemetrykit.samples.full-feature
+        PRODUCT_NAME: TelemetryKit Full Demo
+        INFOPLIST_FILE: Resources/Info.plist
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+  TelemetryKitFullFeatureDemoUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: TelemetryKitFullFeatureDemo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: io.telemetrykit.samples.full-feature.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_VERSION: "5.0"
+
+schemes:
+  TelemetryKitFullFeatureDemo:
+    build:
+      targets:
+        TelemetryKitFullFeatureDemo: all
+    run:
+      config: Debug
+    test:
+      targets:
+        - TelemetryKitFullFeatureDemoUITests
+    archive:
+      config: Release
